@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แบบสอบถามความพึงพอใจ ระบบรายงานยอดเตียง</title>
+<style>
+:root{--pk:#db2777;--dk:#9d174d;--bg:#fdf2f8;--tx:#1e293b;--mu:#64748b;--ln:#e2e8f0;--gr:#10b981;--rd:#f43f5e}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,'Leelawadee UI',sans-serif;background:#f1f5f9;color:var(--tx);font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:14px 14px 90px}
+.hd{background:linear-gradient(135deg,var(--dk),var(--pk));color:#fff;border-radius:16px;padding:18px;margin-bottom:14px}
+.hd h1{margin:0 0 4px;font-size:20px}.hd p{margin:0;font-size:13px;opacity:.9}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:16px;color:var(--dk)}.card .sub{font-size:12px;color:var(--mu);margin:0 0 10px}
+label.l{display:block;font-weight:700;font-size:13px;margin:10px 0 4px}
+input[type=text],select,textarea{width:100%;font:inherit;font-size:16px;padding:10px;border:2px solid var(--ln);border-radius:10px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pk)}
+textarea{min-height:84px;resize:vertical}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{display:flex;align-items:center;gap:6px;border:2px solid var(--ln);border-radius:10px;padding:8px 10px;font-size:14px;cursor:pointer}
+.opts input{accent-color:var(--pk);width:18px;height:18px}
+.q{padding:12px 0;border-top:1px solid var(--ln)}.q.miss{background:#fff1f2;border-radius:10px;padding:12px 8px}
+.q p{margin:0 0 8px;font-size:14px;font-weight:600}
+.rt{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.rt button{border:2px solid var(--ln);background:#fff;border-radius:10px;padding:8px 0;font-size:22px;cursor:pointer;line-height:1.1}
+.rt button small{display:block;font-size:11px;color:var(--mu);font-weight:700}
+.rt button.on{border-color:var(--pk);background:var(--bg)}.rt button.on small{color:var(--pk)}
+.legend{font-size:12px;color:var(--mu);background:#f8fafc;border-radius:8px;padding:8px;margin-bottom:6px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--ln);padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.prog{flex:1}.prog small{font-size:12px;color:var(--mu)}.pb{height:8px;background:var(--ln);border-radius:9px;overflow:hidden}.pb i{display:block;height:100%;background:var(--pk);width:0;transition:width .2s}
+.btn{border:0;border-radius:12px;background:var(--pk);color:#fff;font:inherit;font-weight:700;font-size:16px;padding:12px 20px;cursor:pointer}
+.btn.g{background:#e2e8f0;color:#334155}.btn:disabled{opacity:.6}
+.msg{border-radius:10px;padding:10px;font-size:13px;margin-bottom:12px}.msg.e{background:#ffe4e6;color:#9f1239}.msg.i{background:#fef3c7;color:#92400e}
+.ty{text-align:center;padding:30px 14px}.ty .em{font-size:56px}
+.ft{text-align:center;font-size:12px;color:#94a3b8;margin-top:10px}.ft a{color:#94a3b8;cursor:pointer;text-decoration:underline}
+.kp{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kp div{background:#fff;border:1px solid var(--ln);border-radius:12px;padding:12px}.kp b{display:block;font-size:24px;color:var(--dk)}.kp span{font-size:12px;color:var(--mu)}
+.row{display:grid;grid-template-columns:1fr 150px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--ln);font-size:13px}
+.row .t{font-weight:600}.row .d{font-size:11px;color:var(--mu)}
+.mb{height:10px;background:var(--ln);border-radius:9px;overflow:hidden}.mb i{display:block;height:100%;background:var(--pk)}
+.mv{font-weight:700;color:var(--dk);font-size:13px;margin-bottom:2px}
+.cm{background:#f8fafc;border-radius:10px;padding:8px 10px;margin-top:6px;font-size:13px}.cm small{display:block;color:var(--mu);font-size:11px}
+@media(min-width:600px){.kp{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const DB = 'https://hospital-bed-19bc7-default-rtdb.asia-southeast1.firebasedatabase.app'; // URL เดียวกับระบบรายงานยอดเตียง
+const PIN = '1234';                       // รหัสเปิดหน้าสรุปผล (เปลี่ยนก่อนใช้งานจริง)
+const FACE = ['😞', '🙁', '😐', '🙂', '😄'];
+const SEC = [
+  ['ด้านการใช้งาน', [['q1', 'ระบบใช้งานง่าย เข้าใจวิธีลงข้อมูลได้เอง'], ['q2', 'หน้าต่างลงข้อมูล (ป๊อปอัป) ชัดเจน ช่องกรอกอ่านง่าย'], ['q3', 'การเลือกวัน เวร และหน่วยงานทำได้สะดวก'], ['q4', 'ใช้งานบนมือถือได้สะดวก (ปุ่มและตัวอักษรอ่านง่าย)']]],
+  ['ด้านประสิทธิภาพของระบบ', [['q5', 'ลงข้อมูลได้รวดเร็วกว่าวิธีเดิม'], ['q6', 'ข้อมูลตรงกันทุกเครื่องแบบ Real-time'], ['q7', 'ระบบเสถียร ไม่ค้าง และบันทึกข้อมูลได้สำเร็จ'], ['q8', 'การคำนวณอัตโนมัติ (ผู้ป่วยทั้งหมด เตียงว่าง ค่าเฉลี่ย) ถูกต้อง']]],
+  ['ด้านประโยชน์ในการทำงาน', [['q9', 'เห็นเตียงว่างและสถานะการลงข้อมูลของแต่ละหน่วยงานได้ชัดเจน'], ['q10', 'ช่วยลดภาระงานเอกสารและการรายงาน'], ['q11', 'ข้อมูลน่าเชื่อถือ นำไปใช้ตัดสินใจได้']]],
+  ['ภาพรวม', [['q12', 'ความพึงพอใจโดยรวมต่อระบบ'], ['q13', 'ท่านจะแนะนำและใช้ระบบนี้ต่อไป']]]
+];
+const QS = SEC.flatMap(s => s[1]);
+const ROLES = ['พยาบาลวิชาชีพ', 'ผู้ช่วยพยาบาล (PN)', 'พนักงานช่วยเหลือคนไข้ (NA)', 'หัวหน้าหอผู้ป่วย', 'ผู้บริหาร / ผู้ตรวจการ', 'อื่นๆ'];
+const DEV = ['คอมพิวเตอร์', 'มือถือ', 'ทั้งสองอย่าง'];
+const DUR = ['น้อยกว่า 1 สัปดาห์', '1–4 สัปดาห์', 'มากกว่า 1 เดือน'];
+const PROB = ['ลงข้อมูลไม่ได้ / บันทึกไม่สำเร็จ', 'ข้อมูลไม่ตรงกับเครื่องอื่น', 'ระบบช้าหรือค้าง', 'ใช้งานบนมือถือยาก', 'ไม่เข้าใจวิธีใช้งาน', 'ตัวเลขที่คำนวณไม่ถูกต้อง', 'ไม่พบปัญหา'];
+const $ = id => document.getElementById(id), app = $('app');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let ans = {};
+
+function radios(name, list) { return `<div class="opts">${list.map(x => `<label><input type="radio" name="${name}" value="${esc(x)}">${esc(x)}</label>`).join('')}</div>`; }
+function renderForm(note) {
+  ans = {}; let n = 0;
+  app.innerHTML = `<div class="hd"><h1>แบบสอบถามความพึงพอใจ</h1><p>การใช้งานระบบรายงานยอดเตียง โรงพยาบาลกลาง · ใช้เวลาประมาณ 3 นาที · ไม่ต้องระบุชื่อ</p></div>
+  ${note ? `<div class="msg i">${note}</div>` : ''}<div id="err"></div>
+  <div class="card"><h2>ส่วนที่ 1 ข้อมูลทั่วไป</h2><p class="sub">ไม่บังคับ ใช้เพื่อวิเคราะห์ภาพรวมเท่านั้น</p>
+    <label class="l">หน่วยงาน</label><input type="text" id="ward" placeholder="เช่น 6 CCU, 10 อญ.">
+    <label class="l">ตำแหน่ง</label>${radios('role', ROLES)}
+    <label class="l">อุปกรณ์ที่ใช้ลงข้อมูลเป็นหลัก</label>${radios('device', DEV)}
+    <label class="l">ใช้ระบบมานานเท่าไร</label>${radios('dur', DUR)}</div>
+  <div class="card"><h2>ส่วนที่ 2 ความพึงพอใจ</h2><p class="sub">เลือกระดับความพึงพอใจในแต่ละข้อ (ต้องตอบทุกข้อ)</p>
+    <div class="legend">5 = มากที่สุด · 4 = มาก · 3 = ปานกลาง · 2 = น้อย · 1 = น้อยที่สุด</div>
+    ${SEC.map(([t, items]) => `<h2 style="margin-top:14px;font-size:14px">${t}</h2>` + items.map(([k, tx]) => { n++; return `<div class="q" id="w-${k}"><p>${n}. ${tx}</p><div class="rt">${[1, 2, 3, 4, 5].map(v => `<button type="button" data-k="${k}" data-v="${v}" onclick="pick('${k}',${v})">${FACE[v - 1]}<small>${v}</small></button>`).join('')}</div></div>`; }).join('')).join('')}</div>
+  <div class="card"><h2>ส่วนที่ 3 ปัญหาและข้อเสนอแนะ</h2>
+    <label class="l">ปัญหาที่พบ (เลือกได้หลายข้อ)</label><div class="opts">${PROB.map(x => `<label><input type="checkbox" name="prob" value="${esc(x)}">${esc(x)}</label>`).join('')}</div>
+    <label class="l">ข้อเสนอแนะเพื่อปรับปรุง</label><textarea id="sug" maxlength="1000" placeholder="บอกสิ่งที่อยากให้แก้ไขหรือปรับปรุง"></textarea>
+    <label class="l">ฟีเจอร์ที่อยากให้เพิ่ม</label><textarea id="feat" maxlength="1000"></textarea>
+    <p class="sub" style="margin-top:8px">⚠ กรุณาอย่าใส่ชื่อหรือข้อมูลที่ระบุตัวผู้ป่วยในช่องข้อความ</p></div>
+  <div class="ft"><a onclick="openResults()">สำหรับผู้ดูแลระบบ</a></div>
+  <div class="bar"><div class="in"><div class="prog"><small id="pt">ตอบแล้ว 0/${QS.length} ข้อ</small><div class="pb"><i id="pf"></i></div></div><button class="btn" id="sb" onclick="submitForm()">ส่งแบบสอบถาม</button></div></div>`;
+}
+function pick(k, v) {
+  ans[k] = v;
+  document.querySelectorAll(`[data-k="${k}"]`).forEach(b => b.classList.toggle('on', +b.dataset.v === v));
+  $('w-' + k).classList.remove('miss');
+  const c = Object.keys(ans).length; $('pt').textContent = `ตอบแล้ว ${c}/${QS.length} ข้อ`; $('pf').style.width = (c / QS.length * 100) + '%';
+}
+const radio = n => { const e = document.querySelector(`input[name="${n}"]:checked`); return e ? e.value : ''; };
+async function submitForm() {
+  const miss = QS.filter(([k]) => !ans[k]);
+  if (miss.length) {
+    miss.forEach(([k]) => $('w-' + k).classList.add('miss'));
+    $('err').innerHTML = `<div class="msg e">ยังตอบไม่ครบ ${miss.length} ข้อ (ข้อที่ยังไม่ตอบถูกระบายสีแดงอ่อน)</div>`;
+    $('w-' + miss[0][0]).scrollIntoView({ behavior: 'smooth', block: 'center' }); return;
+  }
+  const body = { ts: { '.sv': 'timestamp' }, v: 1, ward: $('ward').value.trim().slice(0, 60), role: radio('role'), device: radio('device'), dur: radio('dur'), r: ans,
+    problems: [...document.querySelectorAll('input[name=prob]:checked')].map(e => e.value), sug: $('sug').value.trim().slice(0, 1000), feat: $('feat').value.trim().slice(0, 1000) };
+  const b = $('sb'); b.disabled = true; b.textContent = 'กำลังส่ง...';
+  try {
+    const r = await fetch(`${DB}/survey/responses.json`, { method: 'POST', body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(r.status);
+    localStorage.setItem('survey_done', Date.now()); renderThanks();
+  } catch (e) {
+    b.disabled = false; b.textContent = 'ส่งแบบสอบถาม';
+    $('err').innerHTML = `<div class="msg e">ส่งไม่สำเร็จ (${esc(e.message)}) กรุณาตรวจอินเทอร์เน็ตแล้วกดส่งอีกครั้ง ข้อมูลที่กรอกยังอยู่ครบ หากยังส่งไม่ได้ให้แจ้งผู้ดูแลระบบ (อาจต้องตั้งค่าสิทธิ์ฐานข้อมูล)</div>`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+function renderThanks() { app.innerHTML = `<div class="card ty"><div class="em">🙏</div><h2 style="font-size:20px">ขอบคุณที่ตอบแบบสอบถาม</h2><p class="sub">ความคิดเห็นของท่านจะนำไปปรับปรุงระบบให้ดียิ่งขึ้น</p><button class="btn g" onclick="renderForm()">ตอบอีกครั้ง (คนอื่นใช้เครื่องนี้)</button></div>`; }
+
+// ---------- สรุปผล (ผู้ดูแล) ----------
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const lvl = m => m >= 4.5 ? 'มากที่สุด' : m >= 3.5 ? 'มาก' : m >= 2.5 ? 'ปานกลาง' : m >= 1.5 ? 'น้อย' : 'น้อยที่สุด';
+const f2 = x => x.toFixed(2);
+function openResults() { const p = prompt('รหัสผู้ดูแล'); if (p === null) return; if (p !== PIN) { alert('รหัสไม่ถูกต้อง'); return; } loadResults(); }
+async function loadResults() {
+  app.innerHTML = '<div class="card ty">กำลังโหลดผล...</div>';
+  try {
+    const r = await fetch(`${DB}/survey/responses.json`); if (!r.ok) throw new Error(r.status);
+    const j = await r.json(); renderResults(Object.values(j || {}));
+  } catch (e) { app.innerHTML = `<div class="msg e">โหลดผลไม่สำเร็จ (${esc(e.message)}) ตรวจสิทธิ์อ่านฐานข้อมูล</div><button class="btn g" onclick="renderForm()">กลับ</button>`; }
+}
+function renderResults(rs) {
+  const n = rs.length, all = [];
+  const per = QS.map(([k, t]) => { const v = rs.map(x => x.r && +x.r[k]).filter(Boolean); all.push(...v); return { k, t, v, m: mean(v), d: [1, 2, 3, 4, 5].map(s => v.filter(z => z === s).length) }; });
+  const ov = per.find(p => p.k === 'q12'), cnt = (key, list) => list.map(x => [x, rs.filter(r => r[key] === x).length]);
+  const probs = {}; rs.forEach(r => Object.values(r.problems || {}).forEach(p => probs[p] = (probs[p] || 0) + 1));
+  const dt = ts => ts ? new Date(ts).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  const list = (rows, tot) => rows.map(([t, c]) => `<div class="row"><div class="t">${esc(t)}</div><div><div class="mv">${c} คน</div><div class="mb"><i style="width:${tot ? c / tot * 100 : 0}%"></i></div></div></div>`).join('');
+  app.innerHTML = `<div class="hd"><h1>สรุปผลแบบสอบถามความพึงพอใจ</h1><p>จากฐานข้อมูล ณ ${dt(Date.now())}</p></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn g" onclick="renderForm()">← กลับแบบสอบถาม</button><button class="btn g" onclick="loadResults()">↻ รีเฟรช</button><button class="btn" onclick="exportCsv()">ส่งออก CSV</button></div>
+  <div class="kp"><div><b>${n}</b><span>ผู้ตอบทั้งหมด</span></div><div><b>${n ? f2(mean(all)) : '-'}</b><span>คะแนนเฉลี่ยรวม (เต็ม 5)${n ? ' · ' + lvl(mean(all)) : ''}</span></div><div><b>${ov && ov.v.length ? f2(ov.m) : '-'}</b><span>พึงพอใจโดยรวม</span></div><div><b>${all.length ? Math.round(all.filter(x => x >= 4).length / all.length * 100) : 0}%</b><span>ตอบระดับมากขึ้นไป (4–5)</span></div></div>
+  ${SEC.map(([t, items]) => { const ps = per.filter(p => items.some(i => i[0] === p.k)); return `<div class="card"><h2>${t} <span style="font-size:13px;color:var(--mu)">เฉลี่ย ${f2(mean(ps.map(p => p.m)))} (${lvl(mean(ps.map(p => p.m)))})</span></h2>${ps.map(p => `<div class="row"><div><div class="t">${esc(p.t)}</div><div class="d">1:${p.d[0]} · 2:${p.d[1]} · 3:${p.d[2]} · 4:${p.d[3]} · 5:${p.d[4]}</div></div><div><div class="mv">${f2(p.m)} · ${lvl(p.m)}</div><div class="mb"><i style="width:${p.m / 5 * 100}%"></i></div></div></div>`).join('')}</div>`; }).join('')}
+  <div class="card"><h2>ผู้ตอบแบ่งตามตำแหน่ง</h2>${list(cnt('role', ROLES), n)}<h2 style="margin-top:14px">อุปกรณ์ที่ใช้</h2>${list(cnt('device', DEV), n)}<h2 style="margin-top:14px">ระยะเวลาที่ใช้ระบบ</h2>${list(cnt('dur', DUR), n)}</div>
+  <div class="card"><h2>ปัญหาที่พบ</h2>${list(PROB.map(p => [p, probs[p] || 0]), n)}</div>
+  <div class="card"><h2>ข้อเสนอแนะและฟีเจอร์ที่อยากให้เพิ่ม</h2>${rs.filter(r => r.sug || r.feat).sort((a, b) => b.ts - a.ts).map(r => `<div class="cm"><small>${dt(r.ts)} · ${esc(r.ward || 'ไม่ระบุหน่วยงาน')}</small>${r.sug ? 'ข้อเสนอแนะ: ' + esc(r.sug) : ''}${r.feat ? '<br>อยากให้เพิ่ม: ' + esc(r.feat) : ''}</div>`).join('') || '<p class="sub">ยังไม่มีข้อความ</p>'}</div>`;
+  window._rs = rs;
+}
+function exportCsv() {
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  const head = ['เวลา', 'หน่วยงาน', 'ตำแหน่ง', 'อุปกรณ์', 'ระยะเวลาใช้', ...QS.map(x => x[0]), 'ปัญหาที่พบ', 'ข้อเสนอแนะ', 'ฟีเจอร์ที่อยากให้เพิ่ม'];
+  const rows = (window._rs || []).sort((a, b) => a.ts - b.ts).map(r => [r.ts ? new Date(r.ts).toLocaleString('th-TH') : '', r.ward, r.role, r.device, r.dur, ...QS.map(x => r.r && r.r[x[0]]), Object.values(r.problems || {}).join(' / '), r.sug, r.feat].map(q).join(','));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + [head.map(q).join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'satisfaction_survey.csv'; a.click();
+}
+const done = localStorage.getItem('survey_done');
+renderForm(done ? 'เครื่องนี้เคยส่งแบบสอบถามแล้วเมื่อ ' + new Date(+done).toLocaleString('th-TH') + ' หากเป็นผู้อื่นหรือต้องการแก้ไขความเห็น ตอบใหม่ได้' : '');
+</script>
+</body>
+</html>
